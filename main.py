@@ -1,9 +1,14 @@
 import numpy as np
 
-import tqdm
+import tqdm, torch, joblib
 
 from scipy.io import loadmat
 from tools.utils import make_gif
+from tools.data_processing import DatasetClass
+from torch.utils.data import DataLoader
+
+from tools.model import NN
+
 import matplotlib.pyplot as plt
 
 data = loadmat('data/NLS.mat')
@@ -54,7 +59,7 @@ x_ids = np.random.choice(range(len(x)), N0, replace = False)
 x_coords = x[x_ids]
 u_coords, v_coords, h_coords = u_tar[x_ids, 0], v_tar[x_ids, 0], h_tar[x_ids, 0]
 
-points_0 = np.stack((x_coords, u_coords, v_coords, h_coords))
+points_0 = np.stack((x_ids, x_coords, u_coords, v_coords, h_coords)).T
 print('0', x_ids.shape, x_coords.shape, u_coords.shape, v_coords.shape, h_coords.shape, x_ids.shape, points_0.shape)
 
 # 2. Nb = 50 randomly sampled collocation points (temporal) for the periodic boundaries.
@@ -64,17 +69,58 @@ t_ids = np.random.choice(range(len(t)), Nb, replace = False)
 
 t_coords = t[t_ids]
 
-points_b = np.stack((t_ids, t_coords))
+points_b = np.stack((t_ids, t_coords)).T
 print('b', points_b.shape)
 
 # 3. Nf = 20.000 pts to enforce the differential equation conformity.
 Nf = 20000
 
 f_ids = np.random.choice(range(np.product(Exact.shape)), Nf, replace = False)
+
+ids_test = np.array([ j for j in range(np.product(Exact.shape)) if not j in f_ids])
+
 t_ids, x_ids = (f_ids//Exact.shape[0], f_ids%Exact.shape[0])
+
+t_ids_test, x_ids_test = (ids_test//Exact.shape[0], ids_test%Exact.shape[0])
 
 t_values, x_values = t[t_ids], x[x_ids]
 u_values, v_values, f_values = u_tar[x_ids, t_ids], v_tar[x_ids, t_ids], h_tar[x_ids, t_ids]
 
-f_points = np.stack((t_ids, x_ids, t_values, x_values, u_values, v_values, f_values))
-print('f', t_values.shape, x_values.shape, u_values.shape, v_values.shape, f_values.shape, f_points.shape)
+t_test, x_test, u_test, v_test, h_test = t[t_ids_test], x[x_ids_test], u_tar[x_ids_test, t_ids_test], v_tar[x_ids_test, t_ids_test], h_tar[x_ids_test, t_ids_test]
+
+points_f = np.stack((t_ids, x_ids, t_values, x_values, u_values, v_values, f_values)).T
+
+points_f_test = np.stack((t_ids_test, x_ids_test, t_test, x_test, u_test, v_test, h_test)).T
+print('f', t_values.shape, x_values.shape, u_values.shape, v_values.shape, f_values.shape, points_f.shape)
+
+joblib.dump({'train' : points_f, 'test' : points_f_test}, 'data/schrodinger_pts.pt')
+# Transform data into torch loader.
+
+f_dataset = DatasetClass(points_0, points_b, points_f)
+f_dataset_test = DatasetClass(points_0, points_b, points_f_test)
+
+loader = DataLoader(f_dataset, batch_size = 32, shuffle = True)
+test_loader = DataLoader(f_dataset_test, batch_size = 32, shuffle = True)
+# for batch in loader:
+#     for k, v in batch.items():
+#         print(k, ' -> ', v.shape)
+
+from tools.trainer import train
+
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
+model = NN(2, 2, 4, 5).to(device)
+# model.load_weights('weights/lr5e-5/basic.pth.tar')
+
+optimizer = torch.optim.Adam(model.parameters(), lr=1e-4, amsgrad = True)
+# optimizer = torch.optim.LBFGS(model.parameters(), max_iter = 5000)
+
+scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', .2, 100)
+
+train_loss, val_loss, lr_list = train(model, loader, test_loader, optimizer, scheduler, 4)
+
+plt.subplot(121)
+plt.plot(train_loss)
+plt.subplot(122)
+plt.plot(val_loss)
+plt.savefig('./learning.jpg')
+plt.show()
