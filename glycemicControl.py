@@ -154,7 +154,8 @@ def MSE(g, g_0, x, x_0, i, i_0, G, G_point, X, X_point, I, I_point, T, N_f):
               'Gb' : 4.5,
               'Ib' : 0.015,
               'n' : 5/54,
-              'V1' : 12}
+              'V1' : 12,
+              'strategy_number' : 3}
     MSE0 = MSE_0(g, g_0, x, x_0, i, i_0)
     MSE1 = MSE_1(G, G_point, X, T, N_f, params)
     MSE2 = MSE_2(X_point, X, I, N_f, params)
