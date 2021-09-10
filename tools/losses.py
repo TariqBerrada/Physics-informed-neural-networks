@@ -17,12 +17,13 @@ def loss_b(data, model):
     criterion_b = torch.nn.MSELoss(reduction = 'mean')
     criterion_bx = torch.nn.MSELoss(reduction = 'mean')
 
-    left_input = torch.stack((torch.ones_like(data[:, 1])*(-5), data[:, 1])).T
-    right_input = torch.stack((torch.ones_like(data[:, 1])*(5), data[:, 1])).T
+    left_input = torch.stack((torch.ones_like(data[:, 1])*(-5), data[:, 1])).T.requires_grad_()
+    right_input = torch.stack((torch.ones_like(data[:, 1])*(5), data[:, 1])).T.requires_grad_()
 
     left_output = model(left_input)
     right_output = model(right_input)
 
+    
     # a, b = left_output.shape
 
     # left_output_grad =  torch.diagonal(torch.autograd.functional.jacobian(model, left_input).view((a*b, a*b))).view(a, b)
@@ -42,7 +43,7 @@ def loss_b(data, model):
 def loss_f(data, model, equation):
     criterion_f = torch.nn.MSELoss(reduction = 'mean')
 
-    u_data = model(data[:, [2, 1]]) # x and then t.
+    u_data = model(data[:, [3, 2]]) # x and then t.
 
     # a, b = u_data.shape
     # u_grad = torch.diagonal(torch.autograd.functional.jacobian(model))
@@ -51,8 +52,8 @@ def loss_f(data, model, equation):
     # u_grad_t = torch.autograd.grad(model(data[:, [2, 1]]), data[:, 2])
 
     h = u_data# equation(data)
-    # h_t = model.dt(data[:, [2, 1]])
-    h_xx = model.dx2(data[:, [2, 1]])
+    # h_t = model.dt(data[:, [3, 2]])
+    h_xx = model.dx2(data[:, [3, 2]])
 
     f_r = -h[:, 1] +.5*h_xx[:, 0] + h.pow(2).sum(axis = 1)*h[:, 0]
     f_im = h[:, 0] +.5*h_xx[:, 1] + h.pow(2).sum(axis = 1)*h[:, 1]
