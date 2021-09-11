@@ -1,9 +1,15 @@
 import torch
 
+criterion = torch.nn.MSELoss(reduction = 'mean' )
+
+criterion_b = torch.nn.MSELoss(reduction = 'mean')
+criterion_bx = torch.nn.MSELoss(reduction = 'mean')
+
+criterion_f = torch.nn.MSELoss(reduction = 'mean')
+
+
 def loss_0(data, model):
     # data : (batch_size, 5)
-
-    criterion = torch.nn.MSELoss(reduction = 'mean' )
 
     _input = torch.stack((data[:, 1], torch.zeros_like(data[:, 1]))).T
 
@@ -14,8 +20,6 @@ def loss_0(data, model):
     return MSE_0
 
 def loss_b(data, model):
-    criterion_b = torch.nn.MSELoss(reduction = 'mean')
-    criterion_bx = torch.nn.MSELoss(reduction = 'mean')
 
     left_input = torch.stack((torch.ones_like(data[:, 1])*(-5), data[:, 1])).T.requires_grad_()
     right_input = torch.stack((torch.ones_like(data[:, 1])*(5), data[:, 1])).T.requires_grad_()
@@ -41,7 +45,6 @@ def loss_b(data, model):
 
 
 def loss_f(data, model, equation):
-    criterion_f = torch.nn.MSELoss(reduction = 'mean')
 
     u_data = model(data[:, [3, 2]]) # x and then t.
 
@@ -52,11 +55,11 @@ def loss_f(data, model, equation):
     # u_grad_t = torch.autograd.grad(model(data[:, [2, 1]]), data[:, 2])
 
     h = u_data# equation(data)
-    # h_t = model.dt(data[:, [3, 2]])
+    h_t = model.dt(data[:, [3, 2]])
     h_xx = model.dx2(data[:, [3, 2]])
 
-    f_r = -h[:, 1] +.5*h_xx[:, 0] + h.pow(2).sum(axis = 1)*h[:, 0]
-    f_im = h[:, 0] +.5*h_xx[:, 1] + h.pow(2).sum(axis = 1)*h[:, 1]
+    f_r = -h_t[:, 1] +.5*h_xx[:, 0] + h.pow(2).sum(axis = 1)*h[:, 0]
+    f_im = h_t[:, 0] +.5*h_xx[:, 1] + h.pow(2).sum(axis = 1)*h[:, 1]
 
     f = f_r**2 + f_im**2
 

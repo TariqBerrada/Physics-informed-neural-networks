@@ -1,5 +1,7 @@
 import torch, os
 
+import matplotlib.pyplot as plt
+
 class NN(torch.nn.Module):
     def __init__(self, input_dim, output_dim, hidden_dim, n_layers, activation = 'tanh', batch_size= 32):
         super(NN, self).__init__()
@@ -44,6 +46,7 @@ class NN(torch.nn.Module):
 
 
     def dx(self, data):
+        data.requires_grad_()
         # a, b = self.batch_size, self.output_dim
 
         # output_grad =  torch.autograd.functional.jacobian(self, data).view((a*b, a*b))
@@ -58,6 +61,7 @@ class NN(torch.nn.Module):
         return output_dx
 
     def dt(self, data):
+        data.requires_grad_()
         #### print('dt requires grad ?', data.requires_grad)
         # a, b = self.batch_size, self.output_dim
 
@@ -153,13 +157,27 @@ def Imag(model, j):
     return imag_part
 
 if __name__ =='__main__':
-    model = NN(2, 2, 10, 5)
+    device = 'cuda'
+    model = NN(2, 2, 50, 5).to(device)
+    model.load_weights('./weights/basic.pth.tar')
 
-    example_input = torch.zeros(32, 2)
+    example_input = torch.ones(32, 2, requires_grad = True, device = device)
+    example_input[:, 1] = torch.linspace(0, 1, 32)
+    print('e', example_input)
     out = model(example_input)
 
-    print(out.shape)
-    print(model.dx(example_input).shape)
-    print(model.dt(example_input).shape)
-    print(model.dx2(example_input).shape)
-    print(model.dt2(example_input).shape)
+    print(out)
+    print('----')
+    print(model.dx(example_input))
+    print('----')
+    print(model.dt(example_input))
+    print('----')
+    print(model.dx2(example_input))
+    print('----')
+    print(model.dt2(example_input))
+
+    out = out.detach().cpu().numpy()
+    plt.figure()
+    plt.plot(out[:, 0])
+    plt.plot(out[:, 1])
+    plt.show()

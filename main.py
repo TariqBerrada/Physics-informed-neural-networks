@@ -57,6 +57,9 @@ N0 = 50
 x_ids = np.random.choice(range(len(x)), N0, replace = False)
 
 x_coords = x[x_ids]
+
+print(u_tar.shape, '-------------')
+print(u_tar)
 u_coords, v_coords, h_coords = u_tar[x_ids, 0], v_tar[x_ids, 0], h_tar[x_ids, 0]
 
 points_0 = np.stack((x_ids, x_coords, u_coords, v_coords, h_coords)).T
@@ -76,11 +79,9 @@ print('b', points_b.shape)
 Nf = 20000
 
 f_ids = np.random.choice(range(np.product(Exact.shape)), Nf, replace = False)
-
 ids_test = np.array([ j for j in range(np.product(Exact.shape)) if not j in f_ids])
 
 t_ids, x_ids = (f_ids//Exact.shape[0], f_ids%Exact.shape[0])
-
 t_ids_test, x_ids_test = (ids_test//Exact.shape[0], ids_test%Exact.shape[0])
 
 t_values, x_values = t[t_ids], x[x_ids]
@@ -89,7 +90,6 @@ u_values, v_values, f_values = u_tar[x_ids, t_ids], v_tar[x_ids, t_ids], h_tar[x
 t_test, x_test, u_test, v_test, h_test = t[t_ids_test], x[x_ids_test], u_tar[x_ids_test, t_ids_test], v_tar[x_ids_test, t_ids_test], h_tar[x_ids_test, t_ids_test]
 
 points_f = np.stack((t_ids, x_ids, t_values, x_values, u_values, v_values, f_values)).T
-
 points_f_test = np.stack((t_ids_test, x_ids_test, t_test, x_test, u_test, v_test, h_test)).T
 print('f', t_values.shape, x_values.shape, u_values.shape, v_values.shape, f_values.shape, points_f.shape)
 
