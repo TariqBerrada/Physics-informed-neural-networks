@@ -53,8 +53,8 @@ class NN(torch.nn.Module):
         # output_dx = torch.stack((output_grad[:self.batch_size, :self.batch_size].diag(), output_grad[self.batch_size:, :self.batch_size].diag())).T
         ### print('dx requires grad ?', data.requires_grad)
         output= self.forward(data)
-        u_dx = torch.autograd.grad(output[:, [0]], data, torch.ones((data.shape[0], 1)).to(self.device), retain_graph = True)[0]
-        v_dx = torch.autograd.grad(output[:, [1]], data, torch.ones((data.shape[0], 1)).to(self.device), retain_graph = True)[0]
+        u_dx = torch.autograd.grad(output[:, [0]], data, torch.ones((data.shape[0], 1)).to(self.device), create_graph = True, retain_graph = True)[0]
+        v_dx = torch.autograd.grad(output[:, [1]], data, torch.ones((data.shape[0], 1)).to(self.device), create_graph = True, retain_graph = True)[0]
 
         output_dx = torch.stack((u_dx[:, 0], v_dx[:, 0])).T
 
@@ -69,8 +69,8 @@ class NN(torch.nn.Module):
         # output_dt = torch.stack((output_grad[:self.batch_size, self.batch_size:].diag(), output_grad[self.batch_size:, self.batch_size:].diag())).T
         
         output= self.forward(data)
-        u_dt = torch.autograd.grad(output[:, [0]], data, torch.ones((data.shape[0], 1)).to(self.device), retain_graph = True)[0]
-        v_dt = torch.autograd.grad(output[:, [1]], data, torch.ones((data.shape[0], 1)).to(self.device), retain_graph = True)[0]
+        u_dt = torch.autograd.grad(output[:, [0]], data, torch.ones((data.shape[0], 1)).to(self.device),create_graph = True, retain_graph = True)[0]
+        v_dt = torch.autograd.grad(output[:, [1]], data, torch.ones((data.shape[0], 1)).to(self.device),create_graph = True, retain_graph = True)[0]
 
         output_dt = torch.stack((u_dt[:, 1], v_dt[:, 1])).T
 
@@ -79,14 +79,14 @@ class NN(torch.nn.Module):
     def dx2(self, data):
         data.requires_grad_()
         output = self.forward(data)
-        du = torch.autograd.grad(output[:, [0]], data, torch.ones((data.shape[0], 1)).to(self.device), create_graph = True)[0]
-        dv = torch.autograd.grad(output[:, [1]], data, torch.ones((data.shape[0], 1)).to(self.device), create_graph  =True)[0]
+        du = torch.autograd.grad(output[:, [0]], data, torch.ones((data.shape[0], 1)).to(self.device),create_graph = True, retain_graph = True)[0]
+        dv = torch.autograd.grad(output[:, [1]], data, torch.ones((data.shape[0], 1)).to(self.device),create_graph = True, retain_graph = True)[0]
         # du.requires_grad_()
         # dv.requires_grad_()
         #### print('d2u', du.requires_grad, data.requires_grad)
 
-        d2u = torch.autograd.grad(du, data, torch.ones_like(data).to(self.device), create_graph = True)[0]
-        d2v = torch.autograd.grad(dv, data, torch.ones_like(data).to(self.device), create_graph = True)[0]
+        d2u = torch.autograd.grad(du, data, torch.ones_like(data).to(self.device),create_graph = True, retain_graph = True)[0]
+        d2v = torch.autograd.grad(dv, data, torch.ones_like(data).to(self.device),create_graph = True, retain_graph = True)[0]
 
         # output_dx2 = d2u[:, [0]]
         output_dx2 = torch.stack((d2u[:, 0], d2v[:, 0])).T
@@ -96,14 +96,14 @@ class NN(torch.nn.Module):
     def dt2(self, data):
         data.requires_grad_()
         output = self.forward(data)
-        du = torch.autograd.grad(output[:, [0]], data, torch.ones((data.shape[0], 1)).to(self.device), create_graph = True)[0]
-        dv = torch.autograd.grad(output[:, [1]], data, torch.ones((data.shape[0], 1)).to(self.device), create_graph  =True)[0]
+        du = torch.autograd.grad(output[:, [0]], data, torch.ones((data.shape[0], 1)).to(self.device),create_graph = True, retain_graph = True)[0]
+        dv = torch.autograd.grad(output[:, [1]], data, torch.ones((data.shape[0], 1)).to(self.device),create_graph = True, retain_graph = True)[0]
         # du.requires_grad_()
         # dv.requires_grad_()
         ### print('d2u', du.requires_grad, data.requires_grad)
 
-        d2u = torch.autograd.grad(du, data, torch.ones_like(data).to(self.device), create_graph = True)[0]
-        d2v = torch.autograd.grad(dv, data, torch.ones_like(data).to(self.device), create_graph = True)[0]
+        d2u = torch.autograd.grad(du, data, torch.ones_like(data).to(self.device),create_graph = True, retain_graph = True)[0]
+        d2v = torch.autograd.grad(dv, data, torch.ones_like(data).to(self.device),create_graph = True, retain_graph = True)[0]
 
         # output_dx2 = d2u[:, [0]]
         output_dt2 = torch.stack((d2u[:, 1], d2v[:, 1])).T

@@ -97,9 +97,9 @@ joblib.dump({'train' : points_f, 'test' : points_f_test}, 'data/schrodinger_pts.
 # Transform data into torch loader.
 
 f_dataset = DatasetClass(points_0, points_b, points_f)
-f_dataset_test = DatasetClass(points_0, points_b, points_f_test[:2048])
+f_dataset_test = DatasetClass(points_0, points_b, points_f_test)
 
-batch_size = 2048
+batch_size = 20000
 
 loader = DataLoader(f_dataset, batch_size = batch_size, shuffle = True)
 test_loader = DataLoader(f_dataset_test, batch_size = batch_size, shuffle = True)
@@ -113,12 +113,12 @@ device = 'cuda' if torch.cuda.is_available() else 'cpu'
 model = NN(2, 2, 50, 5, batch_size=batch_size).train().to(device)
 # model.load_weights('weights/basic.pth.tar')
 
-optimizer = torch.optim.Adam(model.parameters(), lr=1e-5, amsgrad = True)
-# optimizer = torch.optim.LBFGS(model.parameters(), max_iter = 5000)
+# optimizer = torch.optim.Adam(model.parameters(), lr=1e-4, amsgrad = False)
+optimizer = torch.optim.LBFGS(model.parameters(), lr = 1.0, max_eval = 500, history_size = 50, max_iter = 500, line_search_fn = 'strong_wolfe', tolerance_grad=1e-5, tolerance_change=1.0 * np.finfo(float).eps)
 
-scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', .2, 1000)
+scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', .2, 500)
 
-train_loss, val_loss, lr_list = train(model, loader, test_loader, optimizer, scheduler, 500)
+train_loss, val_loss, lr_list = train(model, loader, test_loader, optimizer, scheduler, 6, weights_dir = './weights/lbfgs.pth.tar', type_ = 'LBFGS')
 
 plt.subplot(121)
 plt.plot(train_loss)

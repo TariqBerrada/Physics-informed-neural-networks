@@ -15,6 +15,13 @@ print(data_test.shape, data_train.shape)
 
 timesteps = list(set(data_test[:, 0]))
 
+batch_size = 64
+
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
+model = NN(2, 2, 50, 5, batch_size = batch_size).to(device)
+model.load_weights('weights/lbfgs.pth.tar')
+# model.eval()
+
 for _id, timestep in tqdm.tqdm(enumerate(timesteps)):
 
     t_ids_test = np.where(data_test[:, 0] == timestep)[0]
@@ -25,12 +32,7 @@ for _id, timestep in tqdm.tqdm(enumerate(timesteps)):
 
     # print(t_ids_train)
 
-    batch_size = 32
 
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    model = NN(2, 2, 50, 5, batch_size = batch_size).to(device)
-    model.load_weights('weights/basic_ckpt.pth.tar')
-    # model.eval()
 
     outputs = []
     x_inputs = []
@@ -51,7 +53,7 @@ for _id, timestep in tqdm.tqdm(enumerate(timesteps)):
             # print('input', batch[:, [3, 2]])
 
             _input = torch.tensor(batch[:, [3, 2]], dtype = torch.float32, device = model.device)
-            print('second dimension of batch', batch[:, 2])
+            # print('second dimension of batch', batch[:, 2])
             # print('input', _input.shape)
             output = model(_input)
             # print('ouput', output.shape)
@@ -71,11 +73,11 @@ for _id, timestep in tqdm.tqdm(enumerate(timesteps)):
     
 
     ## # plt.scatter(outputs[:, 0], outputs[:, 1], s = 5, c = 'green')
-    print('shape of outputs', outputs.shape)
+    # print('shape of outputs', outputs.shape)
     plt.scatter(x_inputs, outputs[:, 0], marker = '*', s = 5)
     plt.scatter(x_inputs, outputs[:, 1], marker = '*', s = 5)
     plt.title(f'timestep = {timestep}')
-    plt.legend(['train_u', 'train_v', 'tar_u', 'tar_v', 'test_u', 'test_v'])
+    plt.legend(['train_u', 'train_v', 'tar_u', 'tar_v', 'test_u', 'test_v'], loc = 'lower left')
     
     plt.xlim(-5, 5)
     plt.ylim(-4.5, 3)

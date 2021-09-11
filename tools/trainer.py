@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import sys, os
 sys.path.append('.')
 
-def fit(model, dataloader, optimizer, scheduler):
+def fit(model, dataloader, optimizer, scheduler, type_ = 'LBFGS'):
     model.train()
 
     device = model.device
@@ -26,26 +26,43 @@ def fit(model, dataloader, optimizer, scheduler):
         data_b = data['data_b'].float().to(model.device)
         data_f = data['data_f'].float().to(model.device)
 
-        # input_0 = torch.cat((data_0[:, 1], torch.zeros_like(data_0[:, 1])))
-        
-        l_0 = loss_0(data_0, model)
-        l_b = loss_b(data_b, model)
-        l_f = loss_f(data_f, model, None)
 
-        _loss = l_0 + l_b + l_f
+        if type_ == 'LBFGS':
+            def closure():
+                optimizer.zero_grad()
+                l_0 = loss_0(data_0, model)
+                l_b = loss_b(data_b, model)
+                l_f = loss_f(data_f, model, None)
 
-        # prediction_0 = model(data_0)
+                _loss = l_0 + l_b + l_f  
 
-        # prediction = model(_input)
+                _loss.backward()
+                return _loss
 
-        
-        # ground_truth = data['prediction'].float().to(model.device) - mean_temperature
-        # # _loss = loss(prediction, ground_truth)
-        # _loss = aleatoric_loss(prediction, ground_truth)
+            optimizer.step(closure)
 
-        running_loss += _loss.item()
-        _loss.backward()
-        optimizer.step()
+
+            # calculate loss again for monitoring.
+            
+            l_0 = loss_0(data_0, model)
+            l_b = loss_b(data_b, model)
+            l_f = loss_f(data_f, model, None)
+
+            _loss = l_0 + l_b + l_f
+            running_loss += _loss.item()
+
+        else:
+
+            l_0 = loss_0(data_0, model)
+            l_b = loss_b(data_b, model)
+            l_f = loss_f(data_f, model, None)
+
+            _loss = l_0 + l_b + l_f
+
+    
+            running_loss += _loss.item()
+            _loss.backward()
+            optimizer.step()
 
     train_loss = running_loss/total # len(dataloader.dataset)
     scheduler.step(train_loss)
@@ -83,7 +100,7 @@ def validate(model, dataloader):
     val_loss = running_loss/total # len(dataloader.dataset)
     return val_loss
 
-def train(model, train_loader, val_loader, optimizer, scheduler, n_epochs, weights_dir = './weights/basic.pth.tar'):
+def train(model, train_loader, val_loader, optimizer, scheduler, n_epochs, weights_dir = './weights/basic.pth.tar', type_ = 'LBFGS'):
     train_loss = []
     val_loss = []
     lr_list = []
@@ -91,7 +108,7 @@ def train(model, train_loader, val_loader, optimizer, scheduler, n_epochs, weigh
     min_loss = np.inf
 
     for epoch in tqdm.tqdm(range(n_epochs)):
-        train_epoch_loss = fit(model, train_loader, optimizer, scheduler)
+        train_epoch_loss = fit(model, train_loader, optimizer, scheduler, type_ = type_)
         val_epoch_loss = validate(model, val_loader)
 
         train_loss.append(train_epoch_loss)

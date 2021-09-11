@@ -27,7 +27,6 @@ def loss_b(data, model):
     left_output = model(left_input)
     right_output = model(right_input)
 
-    
     # a, b = left_output.shape
 
     # left_output_grad =  torch.diagonal(torch.autograd.functional.jacobian(model, left_input).view((a*b, a*b))).view(a, b)
@@ -54,7 +53,7 @@ def loss_f(data, model, equation):
     # u_grad_x = torch.autograd.grad(model(data[:, [2, 1]]), data[:, 2]) # not sure.
     # u_grad_t = torch.autograd.grad(model(data[:, [2, 1]]), data[:, 2])
 
-    h = u_data# equation(data)
+    h = u_data # equation(data)
     h_t = model.dt(data[:, [3, 2]])
     h_xx = model.dx2(data[:, [3, 2]])
 
@@ -63,6 +62,8 @@ def loss_f(data, model, equation):
 
     f = f_r**2 + f_im**2
 
-    MSE_f = criterion_f(f, torch.zeros_like(f))
+    MSE_f = f.mean() # criterion_f(f, torch.zeros_like(f))
+
+    print('mse_f', MSE_f)
 
     return MSE_f
