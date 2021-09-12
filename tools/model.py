@@ -29,11 +29,13 @@ class NN(torch.nn.Module):
         for l in self.layers:
             torch.nn.init.xavier_uniform_(l.weight)
 
-    def forward(self, x):
+    def forward(self, x, t):
+        d = torch.stack([x, t], dim = 1)
+        # print('shape of input', d.shape)
         for l in self.layers[:-1]:
-            x = self.activation(l(x))
-        x = self.layers[-1](x)
-        return x
+            d = self.activation(l(d))
+        d = self.layers[-1](d)
+        return d
 
     def load_weights(self, weights_dir):
         if os.path.isfile(weights_dir):
@@ -47,68 +49,91 @@ class NN(torch.nn.Module):
 
     def dx(self, data):
         data.requires_grad_()
-        # a, b = self.batch_size, self.output_dim
+        x = data[:, 0]
+        t = data[:, 1]
 
-        # output_grad =  torch.autograd.functional.jacobian(self, data).view((a*b, a*b))
-        # output_dx = torch.stack((output_grad[:self.batch_size, :self.batch_size].diag(), output_grad[self.batch_size:, :self.batch_size].diag())).T
-        ### print('dx requires grad ?', data.requires_grad)
-        output= self.forward(data)
-        u_dx = torch.autograd.grad(output[:, [0]], data, torch.ones((data.shape[0], 1)).to(self.device), create_graph = True, retain_graph = True)[0]
-        v_dx = torch.autograd.grad(output[:, [1]], data, torch.ones((data.shape[0], 1)).to(self.device), create_graph = True, retain_graph = True)[0]
+        u = self.real(x, t)
+        v = self.imag(x, t)
+    
+        u_dx = torch.autograd.grad(u, x, torch.ones_like(u), create_graph = True, retain_graph = True)[0]
+        v_dx = torch.autograd.grad(v, x, torch.ones_like(v), create_graph = True, retain_graph = True)[0]
+        
+        output_dx = torch.stack((u_dx, v_dx), dim = 1)
 
-        output_dx = torch.stack((u_dx[:, 0], v_dx[:, 0])).T
 
         return output_dx
 
     def dt(self, data):
         data.requires_grad_()
+
+        x = data[:, 0]
+        t = data[:, 1]
+
+        u = self.real(x, t)
+        v = self.imag(x, t)
+
+        
+
         #### print('dt requires grad ?', data.requires_grad)
         # a, b = self.batch_size, self.output_dim
 
         # output_grad =  torch.autograd.functional.jacobian(self, data).view((a*b, a*b))
         # output_dt = torch.stack((output_grad[:self.batch_size, self.batch_size:].diag(), output_grad[self.batch_size:, self.batch_size:].diag())).T
         
-        output= self.forward(data)
-        u_dt = torch.autograd.grad(output[:, [0]], data, torch.ones((data.shape[0], 1)).to(self.device),create_graph = True, retain_graph = True)[0]
-        v_dt = torch.autograd.grad(output[:, [1]], data, torch.ones((data.shape[0], 1)).to(self.device),create_graph = True, retain_graph = True)[0]
+        u_dt = torch.autograd.grad(u, t, torch.ones_like(u), create_graph = True, retain_graph = True)[0]
+        v_dt = torch.autograd.grad(v, t, torch.ones_like(v), create_graph = True, retain_graph = True)[0]
 
-        output_dt = torch.stack((u_dt[:, 1], v_dt[:, 1])).T
+        output_dt = torch.stack((u_dt, v_dt), dim = 1)
 
         return output_dt
 
     def dx2(self, data):
         data.requires_grad_()
-        output = self.forward(data)
-        du = torch.autograd.grad(output[:, [0]], data, torch.ones((data.shape[0], 1)).to(self.device),create_graph = True, retain_graph = True)[0]
-        dv = torch.autograd.grad(output[:, [1]], data, torch.ones((data.shape[0], 1)).to(self.device),create_graph = True, retain_graph = True)[0]
-        # du.requires_grad_()
-        # dv.requires_grad_()
-        #### print('d2u', du.requires_grad, data.requires_grad)
+        
+        x = data[:, 0]
+        t = data[:, 1]
 
-        d2u = torch.autograd.grad(du, data, torch.ones_like(data).to(self.device),create_graph = True, retain_graph = True)[0]
-        d2v = torch.autograd.grad(dv, data, torch.ones_like(data).to(self.device),create_graph = True, retain_graph = True)[0]
+        u = self.real(x, t)
+        v = self.imag(x, t)
 
+        u_dx = torch.autograd.grad(u, x, torch.ones_like(u), create_graph = True, retain_graph = True)[0]
+        v_dx = torch.autograd.grad(v, x, torch.ones_like(v), create_graph = True, retain_graph = True)[0]
+        
+        u_dx2 = torch.autograd.grad(u_dx, x, torch.ones_like(u_dx), create_graph = True, retain_graph = True)[0]
+        v_dx2 = torch.autograd.grad(v_dx, x, torch.ones_like(v_dx), create_graph = True, retain_graph = True)[0]
+
+
+       
         # output_dx2 = d2u[:, [0]]
-        output_dx2 = torch.stack((d2u[:, 0], d2v[:, 0])).T
+        output_dx2 = torch.stack((u_dx2, v_dx2), dim = 1)
 
         return output_dx2
     
     def dt2(self, data):
         data.requires_grad_()
-        output = self.forward(data)
-        du = torch.autograd.grad(output[:, [0]], data, torch.ones((data.shape[0], 1)).to(self.device),create_graph = True, retain_graph = True)[0]
-        dv = torch.autograd.grad(output[:, [1]], data, torch.ones((data.shape[0], 1)).to(self.device),create_graph = True, retain_graph = True)[0]
-        # du.requires_grad_()
-        # dv.requires_grad_()
-        ### print('d2u', du.requires_grad, data.requires_grad)
+        
 
-        d2u = torch.autograd.grad(du, data, torch.ones_like(data).to(self.device),create_graph = True, retain_graph = True)[0]
-        d2v = torch.autograd.grad(dv, data, torch.ones_like(data).to(self.device),create_graph = True, retain_graph = True)[0]
+        x = data[:, 0]
+        t = data[:, 1]
 
-        # output_dx2 = d2u[:, [0]]
-        output_dt2 = torch.stack((d2u[:, 1], d2v[:, 1])).T
+        u = self.real(x, t)
+        v = self.imag(x, t)
+
+        u_dt = torch.autograd.grad(u, t, torch.ones_like(u), create_graph = True, retain_graph = True)[0]
+        v_dt = torch.autograd.grad(v, t, torch.ones_like(v), create_graph = True, retain_graph = True)[0]
+
+        u_dt2 = torch.autograd.grad(u_dt, t, torch.ones_like(u_dt), create_graph = True, retain_graph = True)[0]
+        v_dt2 = torch.autograd.grad(v_dt, t, torch.ones_like(v_dt), create_graph = True, retain_graph = True)[0]
+
+        output_dt2 = torch.stack((u_dt2, v_dt2), dim = 1)
 
         return output_dt2
+    
+    def real(self, x, t):
+        return self.forward(x, t)[:, 0]
+
+    def imag(self, x, t):
+        return self.forward(x, t)[:, 1]
 
     # def dt2(self, data):
     #     data.requires_grad_()
@@ -145,6 +170,7 @@ class NN(torch.nn.Module):
     #     output_dx2 = torch.stack((output_u_dx2, output_v_dx2)).T
 
     #     return output_dx2
+
 
 def Real(model, j):
     def real_part(data):

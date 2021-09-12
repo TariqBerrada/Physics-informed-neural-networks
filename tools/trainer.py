@@ -36,6 +36,8 @@ def fit(model, dataloader, optimizer, scheduler, type_ = 'LBFGS'):
 
                 _loss = l_0 + l_b + l_f  
 
+                # print(f'l_0 : {l_0} | l_b : {l_b} | l_f {l_f}')
+
                 _loss.backward()
                 return _loss
 
@@ -126,7 +128,7 @@ def train(model, train_loader, val_loader, optimizer, scheduler, n_epochs, weigh
             }
             torch.save(save_dict, weights_dir)
             min_loss = val_epoch_loss
-        if epoch%5 == 0:
+        if epoch%2 == 0:
             save_dict = {
                 'epoch' : epoch,
                 'lr': optimizer.param_groups[0]['lr'],

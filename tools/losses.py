@@ -13,7 +13,7 @@ def loss_0(data, model):
 
     _input = torch.stack((data[:, 1], torch.zeros_like(data[:, 1]))).T
 
-    h_init_pred = model(_input)
+    h_init_pred = model(x = _input[:, 0], t = _input[:, 1])
     h_init_tar = data[:, [2, 3]]
     MSE_0 = criterion(h_init_pred, h_init_tar)
 
@@ -24,8 +24,8 @@ def loss_b(data, model):
     left_input = torch.stack((torch.ones_like(data[:, 1])*(-5), data[:, 1])).T.requires_grad_()
     right_input = torch.stack((torch.ones_like(data[:, 1])*(5), data[:, 1])).T.requires_grad_()
 
-    left_output = model(left_input)
-    right_output = model(right_input)
+    left_output = model(x = left_input[:, 0], t = left_input[:, 1])
+    right_output = model(x = right_input[:, 0], t = right_input[:, 1])
 
     # a, b = left_output.shape
 
@@ -44,8 +44,12 @@ def loss_b(data, model):
 
 
 def loss_f(data, model, equation):
+    x = data[:, 3]
+    t = data[:, 2]
 
-    u_data = model(data[:, [3, 2]]) # x and then t.
+    # u_data = model(data[:, [3, 2]]) # x and then t.
+
+    u_data = model(x, t)
 
     # a, b = u_data.shape
     # u_grad = torch.diagonal(torch.autograd.functional.jacobian(model))
@@ -64,6 +68,6 @@ def loss_f(data, model, equation):
 
     MSE_f = f.mean() # criterion_f(f, torch.zeros_like(f))
 
-    print('mse_f', MSE_f)
+    # print('mse_f', MSE_f)
 
     return MSE_f
