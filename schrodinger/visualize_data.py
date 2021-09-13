@@ -1,4 +1,7 @@
 import numpy as np
+import sys
+sys.path.append('.')
+
 from scipy.io import loadmat
 from tools.utils import make_gif
 
@@ -15,8 +18,6 @@ print(x.shape, t.shape, f.shape)
 u = f.real
 v = f.imag
 
-print(u.shape, v.shape)
-
 for t in range(f.shape[1]):
     plt.figure()
     plt.plot(x, u[:, t])
@@ -24,7 +25,7 @@ for t in range(f.shape[1]):
     plt.xlim(-5, 5)
     plt.ylim(-4, 2.5)
     plt.legend(['real', 'imaginary'])
-    plt.savefig('temp/img_%.3d.jpg'%t)
+    plt.savefig('figures/temp/img_%.3d.jpg'%t)
     plt.close()
 
-make_gif('temp', './sch_data.gif')
+make_gif('temp', './figures/sch_data.gif')

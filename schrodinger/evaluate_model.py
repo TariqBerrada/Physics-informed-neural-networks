@@ -1,8 +1,8 @@
 import numpy as np
 
-import tqdm, torch, joblib
+import tqdm, torch, joblib, sys
+sys.path.append('.')
 
-from tools.data_processing import DatasetClass
 from tools.model import NN
 from tools.utils import make_gif
 import matplotlib.pyplot as plt
@@ -10,8 +10,8 @@ import matplotlib.pyplot as plt
 data = joblib.load('data/schrodinger_pts.pt')
 data_test = data['test']
 data_train = data['train']
-print(data_test.shape, data_train.shape)
 
+print(f'test data : {data_test.shape} | train data : {data_train.shape}')
 
 timesteps = list(set(data_test[:, 0]))
 
@@ -20,12 +20,10 @@ batch_size = 64
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 model = NN(2, 2, 60, 5, batch_size = batch_size).to(device)
 model.load_weights('weights/lbfgs.pth.tar')
-# model.eval()
 
 for _id, timestep in tqdm.tqdm(enumerate(timesteps)):
 
     t_ids_test = np.where(data_test[:, 0] == timestep)[0]
-
     t_ids_train = np.where(data_train[:, 0] == timestep)[0]
 
     outputs = []
@@ -39,7 +37,6 @@ for _id, timestep in tqdm.tqdm(enumerate(timesteps)):
         
         if not batch.shape[0] == batch_size:
             batch = t_data[t_data.shape[0] - batch_size:t_data.shape[0], ...]
-        # if batch.shape[0] == batch_size:
 
         _input = torch.tensor(batch[:, [3, 2]], dtype = torch.float32, device = model.device)
 
@@ -70,7 +67,7 @@ for _id, timestep in tqdm.tqdm(enumerate(timesteps)):
     plt.xlim(-5, 5)
     plt.ylim(-4.5, 3)
 
-    plt.savefig('test_model/img_%.3d.jpg'%_id)
+    plt.savefig('figures/test_model/img_%.3d.jpg'%_id)
     plt.close()
 
-make_gif('./test_model/', 'solution_test.gif')
+make_gif('./test_model/', './figures/solution_test.gif')

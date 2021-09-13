@@ -20,12 +20,9 @@ def fit(model, dataloader, optimizer, scheduler, type_ = 'LBFGS'):
     for i, data in tqdm.tqdm(enumerate(dataloader), total = total):
         optimizer.zero_grad()
 
-        # _input = data['data'].float().to(model.device)
-
-        data_0 = data['data_0'].float().to(model.device)
-        data_b = data['data_b'].float().to(model.device)
-        data_f = data['data_f'].float().to(model.device)
-
+        data_0 = data['data_0'].float().to(device)
+        data_b = data['data_b'].float().to(device)
+        data_f = data['data_f'].float().to(device)
 
         if type_ == 'LBFGS':
             def closure():
@@ -43,9 +40,7 @@ def fit(model, dataloader, optimizer, scheduler, type_ = 'LBFGS'):
 
             optimizer.step(closure)
 
-
             # calculate loss again for monitoring.
-            
             l_0 = loss_0(data_0, model)
             l_b = loss_b(data_b, model)
             l_f = loss_f(data_f, model, None)
@@ -60,13 +55,12 @@ def fit(model, dataloader, optimizer, scheduler, type_ = 'LBFGS'):
             l_f = loss_f(data_f, model, None)
 
             _loss = l_0 + l_b + l_f
-
     
             running_loss += _loss.item()
             _loss.backward()
             optimizer.step()
 
-    train_loss = running_loss/total # len(dataloader.dataset)
+    train_loss = running_loss/total
     scheduler.step(train_loss)
     return train_loss
 
@@ -77,20 +71,10 @@ def validate(model, dataloader):
     total = int(len(dataloader.dataset)/dataloader.batch_size)
     
     for i, data in tqdm.tqdm(enumerate(dataloader), total =total):
-        # _input = data['data'].float().to(device)
-        # with torch.no_grad():
-        #     prediction = model(_input)
-        #     mean_temperature = torch.tile(data['data'].mean(dim = 1)[:, 0], (3, 7, 1)).transpose(0, -1).float().to(device)
-        #     ground_truth = data['prediction'].float().to(model.device)
-        #     # _loss = loss(prediction, ground_truth)
-        #     _loss = aleatoric_loss(prediction, ground_truth)
-        #     running_loss += _loss.item()
 
-        data_0 = data['data_0'].float().to(model.device)
-        data_b = data['data_b'].float().to(model.device)
-        data_f = data['data_f'].float().to(model.device)
-
-        # input_0 = torch.cat((data_0[:, 1], torch.zeros_like(data_0[:, 1])))
+        data_0 = data['data_0'].float().to(device)
+        data_b = data['data_b'].float().to(device)
+        data_f = data['data_f'].float().to(device)
         
         l_0 = loss_0(data_0, model)
         l_b = loss_b(data_b, model)
@@ -99,7 +83,7 @@ def validate(model, dataloader):
         _loss = l_0 + l_b + l_f
 
         running_loss += _loss.item()
-    val_loss = running_loss/total # len(dataloader.dataset)
+    val_loss = running_loss/total
     return val_loss
 
 def train(model, train_loader, val_loader, optimizer, scheduler, n_epochs, weights_dir = './weights/basic.pth.tar', type_ = 'LBFGS'):
@@ -128,6 +112,7 @@ def train(model, train_loader, val_loader, optimizer, scheduler, n_epochs, weigh
             }
             torch.save(save_dict, weights_dir)
             min_loss = val_epoch_loss
+
         if epoch%2 == 0:
             save_dict = {
                 'epoch' : epoch,
@@ -142,7 +127,7 @@ def train(model, train_loader, val_loader, optimizer, scheduler, n_epochs, weigh
             plt.subplot(122)
             plt.plot(val_loss)
             plt.title('test')
-            plt.savefig('./learning.jpg')
+            plt.savefig('./figures/learning.jpg')
             plt.close()
 
         
