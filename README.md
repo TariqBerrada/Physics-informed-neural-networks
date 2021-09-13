@@ -26,4 +26,4 @@ and :
 
  Results obtained can be summarized in the following figure : 
  
- ![Solution to Schrodinger's equation](figures\solution_test.gif)
+ ![Solution to Schrodinger's equation](figures/solution_test.gif)
