@@ -67,10 +67,15 @@ class GlycemicModel(torch.nn.Module):
         I_t = torch.autograd.grad(I, t, torch.ones_like(I), create_graph = True, retain_graph = True)[0]
         return I_t
     
-    def u(self, t):
+    def u_1(self, t):
         # To start off assume that G >= 6 mmol.L-1
         G = self.G(t)
         u_ = G*(0.41 - 0.0094*G)
+        return u_
+
+    def u_2(self, t):
+        G = self.G(t)
+        u_ = 0.007533*(1+0.22*G)
         return u_
 
     def eq_1(self, t):
@@ -79,8 +84,12 @@ class GlycemicModel(torch.nn.Module):
     def eq_2(self, t):
         return self.X_dt(t) + self.p2*self.X(t) - self.p3*self.I(t)
     
-    def eq_3(self, t):
-        return self.I_dt(t) + self.n*(self.I(t) + self.Ib) - self.u(t)/self.V1
+    def eq_3(self, t, u_type):
+        assert u_type in [1, 2], f'Parameter u_type should be one of : [1, 2], got {u_type} !'
+        if u_type == 1:
+            return self.I_dt(t) + self.n*(self.I(t) + self.Ib) - self.u_1(t)/(self.V1*60)
+        else:
+            return self.I_dt(t) + self.n*(self.I(t) + self.Ib) - self.u_2(t)/(self.V1*60)
 
     def load_weights(self, weights_dir):
         if os.path.isfile(weights_dir):

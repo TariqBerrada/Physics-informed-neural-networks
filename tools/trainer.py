@@ -6,13 +6,13 @@ sys.path.append('.')
 
 import numpy as np
 # from tools.losses import loss_0, loss_b, loss_f
-from glycemic_control.loss import l_0
+from glycemic_control.loss import l_0, l_b
 import matplotlib.pyplot as plt
 
 import sys, os
 sys.path.append('.')
 
-def validate_glycemic(model, dataloader):
+def validate_glycemic(model, dataloader, limit_conditions = None):
     model.eval()
     device = model.device
     running_loss = 0.0
@@ -22,8 +22,14 @@ def validate_glycemic(model, dataloader):
     for i, data in tqdm.tqdm(enumerate(dataloader), total =total):
 
         t_f = data['t_f'].float().to(device)
-        
-        mse_f = (model.eq_1(t_f)**2 + model.eq_2(t_f)**2 + model.eq_3(t_f)**2).mean()
+        if limit_conditions is None:
+            u_type = 1
+        else:
+            if limit_conditions[0] >= 6:
+                u_type = 1
+            else:
+                u_type = 2
+        mse_f = (model.eq_1(t_f)**2 + model.eq_2(t_f)**2 + model.eq_3(t_f, u_type = u_type)**2).mean()
 
         _loss = mse_f
 
@@ -31,7 +37,7 @@ def validate_glycemic(model, dataloader):
     val_loss = running_loss/total
     return val_loss
 
-def fit_glycemic(model, dataloader, optimizer, scheduler, type_ = 'LBFGS'):
+def fit_glycemic(model, dataloader, optimizer, scheduler, limit_conditions = None, type_ = 'LBFGS'):
     model.train()
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -49,9 +55,27 @@ def fit_glycemic(model, dataloader, optimizer, scheduler, type_ = 'LBFGS'):
             def closure():
                 optimizer.zero_grad()
                 mse_0 = l_0(model)
-                mse_f = (model.eq_1(t_f)**2 + model.eq_2(t_f)**2 + model.eq_3(t_f)**2).mean()
 
-                _loss = mse_0 + mse_f
+                if limit_conditions is None:
+                    u_type = 1
+                else:
+                    if limit_conditions[0] >= 6:
+                        u_type = 1
+                    else:
+                        u_type = 2
+
+                mse_f = (model.eq_1(t_f)**2 + model.eq_2(t_f)**2 + model.eq_3(t_f, u_type = u_type)**2).mean()
+
+                if limit_conditions is not None:
+                    mse_b = l_b(model, limit_conditions)
+                    mse_0 = 0
+                else:
+                    mse_b = 0
+
+
+
+
+                _loss = mse_0 + mse_f + mse_b
 
                 # print(f'l_0 : {l_0} | l_b : {l_b} | l_f {l_f}')
                 # print('lll', mse_0, mse_f)
@@ -63,18 +87,45 @@ def fit_glycemic(model, dataloader, optimizer, scheduler, type_ = 'LBFGS'):
 
             # calculate loss again for monitoring.
             mse_0 = l_0(model)
-            mse_f = (model.eq_1(t_f)**2 + model.eq_2(t_f)**2 + model.eq_3(t_f)**2).mean()
+            if limit_conditions is None:
+                u_type = 1
+            else:
+                if limit_conditions[0] >= 6:
+                    u_type = 1
+                else:
+                    u_type = 2
+            mse_f = (model.eq_1(t_f)**2 + model.eq_2(t_f)**2 + model.eq_3(t_f, u_type = u_type)**2).mean()
 
-            _loss = mse_0 + mse_f
+            if limit_conditions is not None:
+                mse_b = l_b(model, limit_conditions)
+                mse_0 = 0
+            else:
+                mse_b = 0
+
+            _loss = mse_0 + mse_f + mse_b
 
             running_loss += _loss.item()
 
         else:
 
             mse_0 = l_0(model)
-            mse_f = (model.eq_1(t_f)**2 + model.eq_2(t_f)**2 + model.eq_3(t_f)**2).mean()
 
-            _loss = mse_0 + mse_f
+            if limit_conditions is None:
+                u_type = 1
+            else:
+                if limit_conditions[0] >= 6:
+                    u_type = 1
+                else:
+                    u_type = 2
+            mse_f = (model.eq_1(t_f)**2 + model.eq_2(t_f)**2 + model.eq_3(t_f, u_type = u_type)**2).mean()
+
+            if limit_conditions is not None:
+                mse_b = l_b(model, limit_conditions)
+                mse_0 = 0
+            else:
+                mse_b = 0
+
+            _loss = mse_0 + mse_f + mse_b
     
             running_loss += _loss.item()
             _loss.backward()
@@ -84,7 +135,7 @@ def fit_glycemic(model, dataloader, optimizer, scheduler, type_ = 'LBFGS'):
     scheduler.step(train_loss)
     return train_loss
 
-def train_glycemic(model, train_loader, val_loader, optimizer, scheduler, n_epochs, weights_dir = './weights/basic.pth.tar', type_ = 'LBFGS'):
+def train_glycemic(model, train_loader, val_loader, optimizer, scheduler, n_epochs, limit_conditions = None, weights_dir = './weights/basic.pth.tar', type_ = 'LBFGS'):
     train_loss = []
     val_loss = []
     lr_list = []
@@ -92,8 +143,8 @@ def train_glycemic(model, train_loader, val_loader, optimizer, scheduler, n_epoc
     min_loss = np.inf
 
     for epoch in tqdm.tqdm(range(n_epochs)):
-        train_epoch_loss = fit_glycemic(model, train_loader, optimizer, scheduler, type_ = type_)
-        val_epoch_loss = validate_glycemic(model, val_loader)
+        train_epoch_loss = fit_glycemic(model, train_loader, optimizer, scheduler, limit_conditions = limit_conditions, type_ = type_)
+        val_epoch_loss = validate_glycemic(model, val_loader, limit_conditions = limit_conditions)
 
         train_loss.append(train_epoch_loss)
         val_loss.append(val_epoch_loss)
@@ -103,10 +154,16 @@ def train_glycemic(model, train_loader, val_loader, optimizer, scheduler, n_epoc
         print(' - lr : ', optimizer.param_groups[0]['lr'])
 
         if val_epoch_loss < min_loss:
+            if limit_conditions is not None:
+                c = limit_conditions.detach().cpu().numpy()
+            else:
+                c = None
+
             save_dict = {
                 'epoch' : epoch,
                 'lr': optimizer.param_groups[0]['lr'],
-                'state_dict' : model.state_dict()
+                'state_dict' : model.state_dict(),
+                'conditions' : c
             }
             torch.save(save_dict, weights_dir)
             min_loss = val_epoch_loss
@@ -115,7 +172,8 @@ def train_glycemic(model, train_loader, val_loader, optimizer, scheduler, n_epoc
             save_dict = {
                 'epoch' : epoch,
                 'lr': optimizer.param_groups[0]['lr'],
-                'state_dict' : model.state_dict()
+                'state_dict' : model.state_dict(),
+                'conditions' : c
             }
             torch.save(save_dict, weights_dir[:-8]+'_ckpt.pth.tar')
 

@@ -1,0 +1,50 @@
+import torch, joblib
+import numpy as np
+
+import sys
+sys.path.append('.')
+
+from torch.utils.data import DataLoader
+
+from glycemic_control.model import GlycemicModel
+from tools.data_processing import GlycemicDatasetClass
+from tools.trainer import train_glycemic
+
+import matplotlib.pyplot as plt
+
+def train(model, conditions):
+
+    batch_size = 20000
+
+    Nt = 50000
+    Nf = 20000
+    
+    data = joblib.load('./data/glycemic_t.pt')
+
+    t_f_train = data['train']
+    t_f_test = data['test']
+
+    train_set = GlycemicDatasetClass(t_f_train)
+    test_set = GlycemicDatasetClass(t_f_test)
+
+    train_loader = DataLoader(train_set, batch_size = batch_size)
+    test_loader = DataLoader(test_set, batch_size = batch_size)
+
+    optimizer = torch.optim.LBFGS(model.parameters(), lr = 1.0, max_eval = 500, history_size = 50, max_iter = 500, line_search_fn = 'strong_wolfe', tolerance_grad=1e-5, tolerance_change=1.0 * np.finfo(float).eps)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', .2, 500)
+
+    if conditions is not None:
+        print('training model at timestep : ', conditions[0])
+
+    # Train model for 50 epochs.
+    train_loss, val_loss, lr_list = train_glycemic(model, train_loader, test_loader, optimizer, scheduler, 5, limit_conditions = conditions, weights_dir = f'./weights/glycemic_control/transition_{conditions[0]}.pth.tar', type_ = 'LBFGS')
+    
+    # Check out final learning plot.
+    plt.subplot(121)
+    plt.plot(train_loss)
+    plt.subplot(122)
+    plt.plot(val_loss)
+    plt.savefig(f'./figures/learning_{conditions[0]}.jpg')
+    
+
+    return model

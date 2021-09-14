@@ -19,6 +19,7 @@ batch_size = 20000
 
 Nt = 50000
 Nf = 20000
+
 t_f = np.linspace(0, 720, Nt)[None].T
 np.random.shuffle(t_f)
 
@@ -37,7 +38,7 @@ optimizer = torch.optim.LBFGS(model.parameters(), lr = 1.0, max_eval = 500, hist
 scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', .2, 500)
 
 # Train model for 50 epochs.
-train_loss, val_loss, lr_list = train_glycemic(model, train_loader, test_loader, optimizer, scheduler, 5, weights_dir = './weights_temp.pth.tar', type_ = 'LBFGS')
+train_loss, val_loss, lr_list = train_glycemic(model, train_loader, test_loader, optimizer, scheduler, 5, weights_dir = './weights/init.pth.tar', type_ = 'LBFGS')
 
 # Check out final learning plot.
 plt.subplot(121)
