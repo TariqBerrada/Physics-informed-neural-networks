@@ -16,6 +16,7 @@ def validate_glycemic(model, dataloader):
     model.eval()
     device = model.device
     running_loss = 0.0
+    # print('lml__________', len(dataloader.dataset), dataloader.batch_size)
     total = int(len(dataloader.dataset)/dataloader.batch_size)
     
     for i, data in tqdm.tqdm(enumerate(dataloader), total =total):
@@ -53,6 +54,7 @@ def fit_glycemic(model, dataloader, optimizer, scheduler, type_ = 'LBFGS'):
                 _loss = mse_0 + mse_f
 
                 # print(f'l_0 : {l_0} | l_b : {l_b} | l_f {l_f}')
+                # print('lll', mse_0, mse_f)
 
                 _loss.backward()
                 return _loss
@@ -134,6 +136,8 @@ def fit(model, dataloader, optimizer, scheduler, type_ = 'LBFGS'):
 
     device = model.device
     running_loss = 0.0
+
+    
     
     total = int(len(dataloader.dataset)/dataloader.batch_size)
 

@@ -1,4 +1,4 @@
-import torch
+import torch, os
 
 class GlycemicModel(torch.nn.Module):
     def __init__(self, n_layers = 5, hidden_dim = 100, activation = 'tanh', batch_size = 64):
@@ -81,6 +81,15 @@ class GlycemicModel(torch.nn.Module):
     
     def eq_3(self, t):
         return self.I_dt(t) + self.n*(self.I(t) + self.Ib) - self.u(t)/self.V1
+
+    def load_weights(self, weights_dir):
+        if os.path.isfile(weights_dir):
+            state_dict = torch.load(weights_dir, map_location = 'cpu')
+            state_dict = state_dict['state_dict']
+            self.load_state_dict(state_dict, strict = False)
+            print('loaded state dict from : %s'%weights_dir)
+        else:
+            print('no file found at : %s'%weights_dir)
 
 if __name__ == '__main__':
     import sys
