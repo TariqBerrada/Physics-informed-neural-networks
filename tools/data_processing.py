@@ -17,3 +17,14 @@ class DatasetClass(Dataset):
         idx_0 = idx%self.data_0.shape[0]
         sample = {'data_0' : self.data_0[idx_0, :], 'data_b' : self.data_b[idx_b, :], 'data_f' : self.data_f[idx, :]}
         return sample
+
+class GlycemicDatasetClass(Dataset):
+    def __init__(self, data_f):
+        self.data_f = data_f
+
+    def __len__(self):
+        return self.data_f.shape[0]
+    
+    def __getitem__(self, idx):
+        sample = {'t_f' : self.data_f[idx, :]}
+        return sample
