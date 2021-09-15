@@ -70,12 +70,12 @@ class GlycemicModel(torch.nn.Module):
     def u_1(self, t):
         # To start off assume that G >= 6 mmol.L-1
         G = self.G(t)
-        u_ = G*(0.41 - 0.0094*G)
+        u_ = G*(0.41 - 0.0094*G)*60
         return u_
 
     def u_2(self, t):
         G = self.G(t)
-        u_ = 0.007533*(1+0.22*G)
+        u_ = 0.007533*(1+0.22*G)*60
         return u_
 
     def eq_1(self, t):
@@ -87,9 +87,9 @@ class GlycemicModel(torch.nn.Module):
     def eq_3(self, t, u_type):
         assert u_type in [1, 2], f'Parameter u_type should be one of : [1, 2], got {u_type} !'
         if u_type == 1:
-            return self.I_dt(t) + self.n*(self.I(t) + self.Ib) - self.u_1(t)/(self.V1*60)
+            return self.I_dt(t) + self.n*(self.I(t) + self.Ib) - self.u_1(t)/(self.V1)
         else:
-            return self.I_dt(t) + self.n*(self.I(t) + self.Ib) - self.u_2(t)/(self.V1*60)
+            return self.I_dt(t) + self.n*(self.I(t) + self.Ib) - self.u_2(t)/(self.V1)
 
     def load_weights(self, weights_dir):
         if os.path.isfile(weights_dir):

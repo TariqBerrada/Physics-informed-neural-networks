@@ -19,8 +19,9 @@ def traverse_time(t_init, model, limit_values = None, all_preds= []):
 
     preds = model(t_remaining[None].T)
 
-    for i in range(preds.shape[0] - 1):
-        if (preds[i, 0] - 6)*(preds[i+1, 0] - 6) <= 0:
+    for i in range(1, preds.shape[0]):
+        # print(preds.min().item(), (preds[:i, 0].min().item() - 6)))
+        if (preds[:i, 0].min().item() - 6)*(preds[:i, 0].max().item() - 6) <= 0:
             t_new = t_remaining[i]
             grads=  model.G_dt(t_remaining[None].T)[i, 0], model.I_dt(t_remaining[None].T)[i, 0], model.X_dt(t_remaining[None].T)[i, 0]
             limit_values = torch.stack([t_new, preds[i, 0], preds[i, 1], preds[i, 2], *grads]).detach()

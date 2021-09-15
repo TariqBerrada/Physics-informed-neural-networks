@@ -72,9 +72,7 @@ def fit_glycemic(model, dataloader, optimizer, scheduler, limit_conditions = Non
                 else:
                     mse_b = 0
 
-
-
-
+                # print(mse_0, mse_f.item(), mse_b.item())
                 _loss = mse_0 + mse_f + mse_b
 
                 # print(f'l_0 : {l_0} | l_b : {l_b} | l_f {l_f}')

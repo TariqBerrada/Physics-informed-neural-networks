@@ -21,9 +21,10 @@ _ids = np.argsort(data[:, 0])
 plt.figure()
 plt.plot(data[_ids, 0], output_1[_ids, 0])
 
+
 del model
 model = GlycemicModel()
-model.load_weights('./weights/glycemic_control/transition_7.0.pth.tar')
+model.load_weights('./weights/glycemic_control/transition_3.0.pth.tar')
 output_2 = model(_input).detach().cpu().numpy()
 
 plt.plot(data[_ids, 0], output_2[_ids, 0])
