@@ -1,5 +1,5 @@
 import numpy as np
-import seaborn as sns
+# import seaborn as sns
 import matplotlib.pyplot as plt
 from math import *
 import pandas as pd
@@ -43,6 +43,17 @@ df['time']=[i for i in range(721)]
 df['G']=l_g
 df['X']=l_x
 df["I"]=l_i
-plt.figure(figsize=(9,9))
-sns.lineplot(x="time",y="G",data=df)
+# plt.figure(figsize=(9,9))
+# sns.lineplot(x="time",y="G",data=df)
+# plt.show()
+plt.figure()
+plt.plot(df['time'][:180], df['G'][:180], 'b')
+plt.plot(df['time'][180:], df['G'][180:], 'r')
+
+plt.scatter(df['time'][180], df['G'][180])
+
+plt.legend(['state 1 : $u = u_1$', 'state 2 : $u = u2$', 'transition'])
+plt.xlabel('time $(min)$')
+plt.ylabel('G $(mmol.L^{-1})$')
+plt.savefig('grph.png')
 plt.show()

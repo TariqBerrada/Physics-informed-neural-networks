@@ -67,29 +67,59 @@ class GlycemicModel(torch.nn.Module):
         I_t = torch.autograd.grad(I, t, torch.ones_like(I), create_graph = True, retain_graph = True)[0]
         return I_t
     
+    # def u_1(self, t):
+    #     # To start off assume that G >= 6 mmol.L-1
+    #     G = self.G(t)
+    #     u_ = G*(0.41 - 0.0094*G)/60
+    #     return u_
+
+    # def u_2(self, t):
+    #     G = self.G(t)
+    #     u_ = 0.007533*(1+0.22*G)
+    #     return u_
+
     def u_1(self, t):
-        # To start off assume that G >= 6 mmol.L-1
+        return 0.5
+    
+    def u_2(self, t):
+        return 2.5
+    
+    def u_3(self, t):
         G = self.G(t)
-        u_ = G*(0.41 - 0.0094*G)*60
+        u_ = (0.5*G - 1.5)
         return u_
 
-    def u_2(self, t):
-        G = self.G(t)
-        u_ = 0.007533*(1+0.22*G)*60
-        return u_
 
     def eq_1(self, t):
-        return self.G_dt(t) + self.p1*self.G(t) + self.X(t)*(self.G(t)+self.Gb) - self.P(t)
+        # return self.G_dt(t) + self.p1*self.G(t) + self.X(t)*(self.G(t)+self.Gb) - self.P(t)
+        return self.G_dt(t) + self.X(t)*(self.G(t) + 4.5) - self.P(t)
     
     def eq_2(self, t):
-        return self.X_dt(t) + self.p2*self.X(t) - self.p3*self.I(t)
+        # return self.X_dt(t) + self.p2*self.X(t) - self.p3*self.I(t)
+        return self.X_dt(t) + 0.025*self.X(t) - 0.013*self.I(t)
+
+    # # def eq_3(self, t, u_type):
+    # #     assert u_type in [1, 2, 3], f'Parameter u_type should be one of : [1, 2, 3], got {u_type} !'
+    # #     if u_type == 1: # < 4
+    # #         # return self.I_dt(t) + self.n*(self.I(t) + self.Ib) - self.u_1(t)/(self.V1)
+    # #         return self.I_dt + 0.093*(self.I(t) + 0.015) + 0.00069444
+    # #     elif u_type == 2: 
+    # #         # return self.I_dt(t) + self.n*(self.I(t) + self.Ib) - self.u_2(t)/(self.V1)
+    # #         return self.I_dt(t) + 0.093*(self.I(t) + 0.015) - 0.00069444*self.G(t) + 0.002083333
+    # #     else: # > 8
+    # #         # return self.I_dt(t) + self.n*(self.I(t) + self.Ib) - self.u_3(t)/(self.V1)
+    # #         return self.I_dt(t) + 0.093*(self.I(t) + 0.015) + 0.00347222
     
     def eq_3(self, t, u_type):
         assert u_type in [1, 2], f'Parameter u_type should be one of : [1, 2], got {u_type} !'
-        if u_type == 1:
-            return self.I_dt(t) + self.n*(self.I(t) + self.Ib) - self.u_1(t)/(self.V1)
-        else:
-            return self.I_dt(t) + self.n*(self.I(t) + self.Ib) - self.u_2(t)/(self.V1)
+        if u_type == 1: # > 6
+            # return self.I_dt(t) + self.n*(self.I(t) + self.Ib) - self.u_1(t)/(self.V1)
+            # return self.I_dt + 0.093*(self.I(t) + 0.015) + 0.00069444
+            return self.I_dt(t) + 0.093*(self.I(t) + 0.015) - 0.00138889*self.G(t)*(0.41 - 0.0094*self.G(t))
+        elif u_type == 2: # < 6
+            # return self.I_dt(t) + self.n*(self.I(t) + self.Ib) - self.u_2(t)/(self.V1)
+            # return self.I_dt(t) + 0.093*(self.I(t) + 0.015) - 0.00069444*self.G(t) + 0.002083333
+            return self.I_dt(t) + 0.093*(self.I(t) + 0.015) - 4.5*0.0001395*(1 + 0.222222*self.G(t))
 
     def load_weights(self, weights_dir):
         if os.path.isfile(weights_dir):

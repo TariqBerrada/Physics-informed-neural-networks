@@ -8,6 +8,8 @@ from glycemic_control.model import GlycemicModel
 from glycemic_control.loss import l_b
 from glycemic_control.utils import train
 
+torch.cuda.empty_cache()
+
 def traverse_time(t_init, model, limit_values = None, all_preds= []):
     t_remaining = torch.arange(t_init, 751, step = 1).float().to(model.device)
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -19,12 +21,13 @@ def traverse_time(t_init, model, limit_values = None, all_preds= []):
 
     preds = model(t_remaining[None].T)
 
-    for i in range(1, preds.shape[0]):
+    for i in range(1, preds.shape[0], 180):
         # print(preds.min().item(), (preds[:i, 0].min().item() - 6)))
+        print('shape of preds', preds.shape)
         if (preds[:i, 0].min().item() - 6)*(preds[:i, 0].max().item() - 6) <= 0:
             t_new = t_remaining[i]
-            grads=  model.G_dt(t_remaining[None].T)[i, 0], model.I_dt(t_remaining[None].T)[i, 0], model.X_dt(t_remaining[None].T)[i, 0]
-            limit_values = torch.stack([t_new, preds[i, 0], preds[i, 1], preds[i, 2], *grads]).detach()
+            grads=  model.G_dt(t_remaining[None].T)[i, 0].detach(), model.I_dt(t_remaining[None].T)[i, 0].detach(), model.X_dt(t_remaining[None].T)[i, 0].detach()
+            limit_values = torch.stack([t_new, preds[i, 0].detach(), preds[i, 1].detach(), preds[i, 2].detach(), *grads]).detach()
             
             # return traverse_time(t_new, model, limit_values = limit_values)
             ######## loss = l_b(model, limit_values)
