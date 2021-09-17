@@ -6,7 +6,7 @@ sys.path.append('.')
 
 from glycemic_control.model import GlycemicModel
 
-data = joblib.load('data/glycemic_t.pt')['train']
+data = joblib.load('data/glycemic_t.pt')['test']
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
@@ -42,6 +42,9 @@ plt.plot(data[_ids, 0][sp:], output_2[_ids, 0][sp:], 'r')
 # output_3 = model(_input).detach().cpu().numpy()
 
 # plt.plot(data[_ids, 0], output_3[_ids, 0])
-
-plt.legend(['initial', 'after transition'])
+plt.ylim([-5, 16])
+plt.xlabel('time $(min)$')
+plt.ylabel('$G (mmol.L^{-1})$')
+plt.legend(['$t<t_1$ : $u = u_1$','$t \geq t_1$ : $u = u_1$', '$t<t_1$ : $u = u_2$','$t \geq t_1$ : $u = u_2$'])
+plt.savefig('./figure.jpg')
 plt.show()

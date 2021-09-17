@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 model = GlycemicModel().train().to(device)
-model.load_weights('weights/glycemic_control/init.pth.tar')
+# model.load_weights('weights/glycemic_control/init.pth.tar')
 batch_size = 20000
 
 Nt = 50000
@@ -34,7 +34,7 @@ test_set = GlycemicDatasetClass(t_f_test)
 train_loader = DataLoader(train_set, batch_size = batch_size)
 test_loader = DataLoader(test_set, batch_size = batch_size)
 
-optimizer = torch.optim.LBFGS(model.parameters(), lr = 1, max_eval = 2000, history_size = 50, max_iter = 2000, line_search_fn = 'strong_wolfe', tolerance_grad=1e-4, tolerance_change= np.finfo(float).eps)
+optimizer = torch.optim.LBFGS(model.parameters(), lr = 1, max_eval = 2000, history_size = 500, max_iter = 2000, line_search_fn = 'strong_wolfe', tolerance_grad=1e-5, tolerance_change= np.finfo(float).eps)
 # optimizer = torch.optim.Adam(model.parameters(), lr = 1e-4, amsgrad = True)
 scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', .2, 500)
 

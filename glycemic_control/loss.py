@@ -2,6 +2,8 @@ import torch
 
 criterion_0 = torch.nn.MSELoss(reduction = 'mean' )
 criterion_b = torch.nn.MSELoss(reduction = 'mean' )
+criterion_appr = torch.nn.MSELoss(reduction = 'mean')
+
 
 def l_0(model):
 
@@ -20,7 +22,23 @@ def l_0(model):
     target.to(model.device)
     l_0 = criterion_0(pred, target)
     return l_0
-    
+
+def l_appr(model, state = 1):
+    target = torch.tensor([0.40827130997541566, -0.12952662566531847, -1.7896865370716464], dtype = torch.float32).to(model.device)[None].T
+    t =  torch.tensor([50., 175., 100], dtype = torch.float32).to(model.device)[None].T
+
+    # print(target.shape, t.shape)
+    if state == 2:
+        target = torch.tensor([5.639932487903715], dtype = torch.float32).to(model.device)[None].T
+        t =  torch.tensor([500], dtype = torch.float32).to(model.device)[None].T
+
+
+    l_appr = criterion_appr(target, model(t)[:, [0]])
+
+    return l_appr
+
+
+
 def l_b(model, conditions):
     
     preds = model(conditions[0][None][None])
@@ -32,5 +50,5 @@ def l_b(model, conditions):
 
     # print('limit conditions', all.shape, conditions[1:][None].shape)
     # print('shapes', all.shape, conditions.shape)
-    mse_b = criterion_b(all, conditions[1:][None])
+    mse_b = 10*criterion_b(all, conditions[1:][None])
     return mse_b

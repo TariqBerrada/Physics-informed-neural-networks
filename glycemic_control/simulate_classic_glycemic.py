@@ -56,7 +56,6 @@ df['time']=[i for i in range(721)]
 df['G']=l_g
 df['X']=l_x
 df["I"]=l_i
-<<<<<<< HEAD
 # plt.figure(figsize=(9,9))
 # sns.lineplot(x="time",y="G",data=df)
 # plt.show()
@@ -66,15 +65,13 @@ plt.plot(df['time'][180:], df['G'][180:], 'r')
 
 plt.scatter(df['time'][180], df['G'][180])
 
+print(df['G'][175])
+print('100', df['G'][100])
+print('50', df['G'][50])
+print('500', df['G'][500])
+
 plt.legend(['state 1 : $u = u_1$', 'state 2 : $u = u2$', 'transition'])
 plt.xlabel('time $(min)$')
 plt.ylabel('G $(mmol.L^{-1})$')
 plt.savefig('grph.png')
 plt.show()
-=======
-
-## Plot the results 
-plt.figure(figsize=(9,9))
-sns.lineplot(x="time",y="G",data=df)
-plt.show()
->>>>>>> 368ff4b517121ae0015a05a0ddd18ed3a1ea0d27

@@ -34,7 +34,7 @@ def train(model, conditions):
     train_loader = DataLoader(train_set, batch_size = batch_size)
     test_loader = DataLoader(test_set, batch_size = batch_size)
 
-    optimizer = torch.optim.LBFGS(model.parameters(), lr = .1, max_eval = 2000, history_size = 50, max_iter = 2000, line_search_fn = 'strong_wolfe', tolerance_grad=1e-4, tolerance_change=1.0 * np.finfo(float).eps)
+    optimizer = torch.optim.LBFGS(model.parameters(), lr = 1, max_eval = 2000, history_size = 500, max_iter = 2000, line_search_fn = 'strong_wolfe', tolerance_grad=1e-5, tolerance_change=1.0 * np.finfo(float).eps)
     # optimizer = torch.optim.Adam(model.parameters(), lr = 1e-3, amsgrad = True)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', .2, 200)
 
@@ -42,7 +42,7 @@ def train(model, conditions):
         print('training model at timestep : ', conditions[0] , ' | G = ', conditions[1])
 
     # Train model for 50 epochs.
-    train_loss, val_loss, lr_list = train_glycemic(model, train_loader, test_loader, optimizer, scheduler, 200, limit_conditions = conditions, weights_dir = f'./weights/glycemic_control/transition_{conditions[0]}.pth.tar', type_ = 'LBFGS')
+    train_loss, val_loss, lr_list = train_glycemic(model, train_loader, test_loader, optimizer, scheduler, 5, limit_conditions = conditions, weights_dir = f'./weights/glycemic_control/transition_{conditions[0]}.pth.tar', type_ = 'LBFGS')
     
     # Check out final learning plot.
     plt.subplot(121)

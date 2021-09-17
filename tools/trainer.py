@@ -6,7 +6,7 @@ sys.path.append('.')
 
 import numpy as np
 # from tools.losses import loss_0, loss_b, loss_f
-from glycemic_control.loss import l_0, l_b
+from glycemic_control.loss import l_0, l_b, l_appr
 import matplotlib.pyplot as plt
 
 import sys, os
@@ -93,10 +93,12 @@ def fit_glycemic(model, dataloader, optimizer, scheduler, limit_conditions = Non
                 else:
                     mse_b = 0
 
-
-
+                if limit_conditions is not None:
+                    mse_appr = l_appr(model, state = 2)
+                else:
+                    mse_appr = l_appr(model)
                 # print('losses', mse_0, mse_f, mse_b)
-                _loss = mse_0 + mse_f + mse_b
+                _loss = mse_0 + mse_f + mse_b + mse_appr
 
                 # print(f'l_0 : {l_0} | l_b : {l_b} | l_f {l_f}')
                 # print('lll', mse_0, mse_f)
@@ -123,7 +125,11 @@ def fit_glycemic(model, dataloader, optimizer, scheduler, limit_conditions = Non
             else:
                 mse_b = 0
 
-            _loss = mse_0 + mse_f + mse_b
+            if limit_conditions is not None:
+                mse_appr = l_appr(model, state = 2)
+            else:
+                mse_appr = l_appr(model)
+            _loss = mse_0 + mse_f + mse_b + mse_appr
 
             running_loss += _loss.item()
 
@@ -146,7 +152,12 @@ def fit_glycemic(model, dataloader, optimizer, scheduler, limit_conditions = Non
             else:
                 mse_b = 0
 
-            _loss = mse_0 + mse_f + mse_b
+            if limit_conditions is not None:
+                mse_appr = l_appr(model, state = 2)
+            else:
+                mse_appr = l_appr(model)
+
+            _loss = mse_0 + mse_f + mse_b + mse_appr
     
             running_loss += _loss.item()
             _loss.backward()
@@ -179,7 +190,6 @@ def train_glycemic(model, train_loader, val_loader, optimizer, scheduler, n_epoc
     else:
         if limit_conditions[1] >= 6:
             u_type = 1
-            print('in', 1)
         else:
             u_type = 2
             
