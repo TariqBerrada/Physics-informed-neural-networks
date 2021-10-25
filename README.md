@@ -28,6 +28,18 @@ and :
  
  ![Solution to Schrodinger's equation](figures/solution_test.gif)
 
+
+## Example 2 : Glycemic control
+Applying our problem to solve the followig system, with three different strategies proposed for G (See [[6]](#6) for more information).
+
+![Glycemic control system](figures/glycemic_eq.jpg)
+
+Our algorithm solves the problem but learns a solution that differs slightly from the one obtained using finite difference methods.
+
+After further investigation we realized that the problem is simply too ill-posed and ou methods learns another valid solution. Adding collocation conditions by sampling different points of the solution ( for example 3 loss terms of the type $f(t_i) = y_i$ suffice to then learn a solution similar to the one obtained by other methods.
+
+![Solution for the 3rd strategy](figures/grph.png)
+
  ##  State of the art
 
  The idea of using neural networks (NN) to solve Ordinary Differential Equations (ODEs) and Partial Differential Equations (PDEs) has been widely explored for a long time. The first publication trying to do it was written by I.E. Lagaris et al. in 1997 [[1]](#1). Neural networks are used with a custom loss function which ensures that the ODE or PDE is satisfied by the NN. An aditional term is added to ensure boundary and initial conditions.
@@ -70,4 +82,5 @@ Volume 41, Issue 2,
 Aditi S. Krishnapriyan, Amir Gholami, Shandian Zhe, Robert M. Kirby, Michael W. Mahoney (2021).
 Characterizing possible failure modes in physics-informed neural networks.
 
- 
+<a id="6">[6]</a>
+https://ths.rwth-aachen.de/research/projects/hypro/glycemic-control/
