@@ -54,9 +54,6 @@ for _id, timestep in tqdm.tqdm(enumerate(timesteps)):
 
     plt.scatter(data_train[t_ids_train, 3], data_train[t_ids_train, 4], s = 5, c = 'b')
     plt.scatter(data_train[t_ids_train, 3], data_train[t_ids_train, 5], s = 5, c = 'r')
-    
-    # plt.scatter(data_test[t_ids_test, 3], data_test[t_ids_test, 4], s = 5)
-    # plt.scatter(data_test[t_ids_test, 3], data_test[t_ids_test, 5], s = 5)
 
     plt.scatter(x_inputs, outputs[:, 0], marker = '*', s = 5)
     plt.scatter(x_inputs, outputs[:, 1], marker = '*', s = 5)

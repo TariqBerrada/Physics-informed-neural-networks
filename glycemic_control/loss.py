@@ -6,6 +6,14 @@ criterion_appr = torch.nn.MSELoss(reduction = 'mean')
 
 
 def l_0(model):
+    """Initial conditions loss.
+
+    Args:
+        model ([type]): [description]
+
+    Returns:
+        [type]: [description]
+    """
 
     N0 = 1
     
@@ -24,10 +32,20 @@ def l_0(model):
     return l_0
 
 def l_appr(model, state = 1):
+    """Approximation loss.
+    collocation loss of type (f(xi) - yi)**2
+
+    Args:
+        model ([type]): [description]
+        state (int, optional): [description]. Defaults to 1.
+
+    Returns:
+        [type]: [description]
+    """
+    # Hardcoded collocation values to use as limit conditions.
     target = torch.tensor([0.40827130997541566, -0.12952662566531847, -1.7896865370716464], dtype = torch.float32).to(model.device)[None].T
     t =  torch.tensor([50., 175., 100], dtype = torch.float32).to(model.device)[None].T
 
-    # print(target.shape, t.shape)
     if state == 2:
         target = torch.tensor([5.639932487903715], dtype = torch.float32).to(model.device)[None].T
         t =  torch.tensor([500], dtype = torch.float32).to(model.device)[None].T
@@ -38,17 +56,24 @@ def l_appr(model, state = 1):
     return l_appr
 
 
-
 def l_b(model, conditions):
+    """Gradient continuity loss.
+
+    Args:
+        model ([type]): [description]
+        conditions ([type]): [description]
+
+    Returns:
+        [type]: [description]
+    """
     
     preds = model(conditions[0][None][None])
+
     Gt_p = model.G_dt(conditions[0][None][None])
     Xt_p = model.X_dt(conditions[0][None][None])
     It_p = model.I_dt(conditions[0][None][None])
 
     all = torch.cat((preds, Gt_p, Xt_p, It_p), dim = 1)
 
-    # print('limit conditions', all.shape, conditions[1:][None].shape)
-    # print('shapes', all.shape, conditions.shape)
     mse_b = 10*criterion_b(all, conditions[1:][None])
     return mse_b

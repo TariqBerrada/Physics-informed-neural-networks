@@ -22,15 +22,11 @@ def traverse_time(t_init, model, limit_values = None, all_preds= []):
     preds = model(t_remaining[None].T)
 
     for i in range(1, preds.shape[0], 180):
-        # print(preds.min().item(), (preds[:i, 0].min().item() - 6)))
-        print('shape of preds', preds.shape)
         if (preds[:i, 0].min().item() - 6)*(preds[:i, 0].max().item() - 6) <= 0:
             t_new = t_remaining[i]
             grads=  model.G_dt(t_remaining[None].T)[i, 0].detach(), model.I_dt(t_remaining[None].T)[i, 0].detach(), model.X_dt(t_remaining[None].T)[i, 0].detach()
             limit_values = torch.stack([t_new, preds[i, 0].detach(), preds[i, 1].detach(), preds[i, 2].detach(), *grads]).detach()
             
-            # return traverse_time(t_new, model, limit_values = limit_values)
-            ######## loss = l_b(model, limit_values)
             del model
             model = GlycemicModel().train().to(device)
             all_preds.append(preds)
@@ -38,7 +34,7 @@ def traverse_time(t_init, model, limit_values = None, all_preds= []):
             return traverse_time(t_new + 1, model, limit_values = limit_values, all_preds = all_preds)
 
             
-    print('done traversing !')
+    print('Done traversing !')
     return all_preds
     
 

@@ -91,12 +91,14 @@ class GlycemicModel(torch.nn.Module):
 
 
     def eq_1(self, t):
-        # return self.G_dt(t) + self.p1*self.G(t) + self.X(t)*(self.G(t)+self.Gb) - self.P(t)
-        return self.G_dt(t) + self.X(t)*(self.G(t) + 4.5) - self.P(t)
+        return self.G_dt(t) + self.p1*self.G(t) + self.X(t)*(self.G(t)+self.Gb) - self.P(t)
+        # return self.G_dt(t) + self.X(t)*(self.G(t) + 4.5) - self.P(t)
     
     def eq_2(self, t):
-        # return self.X_dt(t) + self.p2*self.X(t) - self.p3*self.I(t)
-        return self.X_dt(t) + 0.025*self.X(t) - 0.013*self.I(t)
+        return self.X_dt(t) + self.p2*self.X(t) - self.p3*self.I(t)
+        # return self.X_dt(t) + 0.025*self.X(t) - 0.013*self.I(t)
+
+    # Use this if dealing with model type 1.
 
     # # def eq_3(self, t, u_type):
     # #     assert u_type in [1, 2, 3], f'Parameter u_type should be one of : [1, 2, 3], got {u_type} !'
@@ -114,7 +116,7 @@ class GlycemicModel(torch.nn.Module):
         assert u_type in [1, 2], f'Parameter u_type should be one of : [1, 2], got {u_type} !'
         if u_type == 1: # > 6
             # return self.I_dt(t) + self.n*(self.I(t) + self.Ib) - self.u_1(t)/(self.V1)
-            # return self.I_dt + 0.093*(self.I(t) + 0.015) + 0.00069444
+            # return self.I_dt + 0.093*(self.I(t) + 0.015) + 0.00069444 # If using model type 1
             return self.I_dt(t) + 0.093*(self.I(t) + 0.015) - 0.00138889*self.G(t)*(0.41 - 0.0094*self.G(t))
         elif u_type == 2: # < 6
             # return self.I_dt(t) + self.n*(self.I(t) + self.Ib) - self.u_2(t)/(self.V1)
@@ -142,6 +144,5 @@ if __name__ == '__main__':
     y = model(x)
     g = model.G(x)
     gdt = model.G_dt(x)
-    print(y.shape, g.shape, gdt.shape)
+
     l = l_0(model)
-    print(l)

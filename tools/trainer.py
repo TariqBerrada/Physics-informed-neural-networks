@@ -5,7 +5,7 @@ import sys
 sys.path.append('.')
 
 import numpy as np
-# from tools.losses import loss_0, loss_b, loss_f
+
 from glycemic_control.loss import l_0, l_b, l_appr
 import matplotlib.pyplot as plt
 
@@ -16,29 +16,11 @@ def validate_glycemic(model, dataloader, limit_conditions = None, u_type = None)
     model.eval()
     device = model.device
     running_loss = 0.0
-    # print('lml__________', len(dataloader.dataset), dataloader.batch_size)
     total = int(len(dataloader.dataset)/dataloader.batch_size)
     
     for i, data in tqdm.tqdm(enumerate(dataloader), total =total):
 
         t_f = data['t_f'].float().to(device)
-        # if limit_conditions is None:
-        #     u_type = 1
-        # else:
-        #     if limit_conditions[1] >= 6:
-        #         u_type = 1
-        #     else:
-        #         u_type = 2
-
-        # if limit_conditions is None:
-        #     u_type = 1
-        # else:
-        #     if limit_conditions[1] < 4:
-        #         u_type = 1
-        #     elif limit_conditions[1] > 8:
-        #         u_type = 2
-        #     else:
-        #         u_type = 3
 
         mse_f = (model.eq_1(t_f)**2 + model.eq_2(t_f)**2 + model.eq_3(t_f, u_type = u_type)**2).mean()
 
@@ -59,13 +41,14 @@ def fit_glycemic(model, dataloader, optimizer, scheduler, limit_conditions = Non
     for i, data in tqdm.tqdm(enumerate(dataloader), total = total):
         optimizer.zero_grad()
 
-        # data_0 = data['data_0'].float().to(device)
         t_f = data['t_f'].float().to(device)
 
         if type_ == 'LBFGS':
             def closure():
                 optimizer.zero_grad()
                 mse_0 = l_0(model)
+                
+                # If using model type 1.
 
                 # if limit_conditions is None:
                 #     u_type = 1
@@ -87,6 +70,8 @@ def fit_glycemic(model, dataloader, optimizer, scheduler, limit_conditions = Non
 
                 mse_f = (model.eq_1(t_f)**2 + model.eq_2(t_f)**2 + model.eq_3(t_f, u_type = u_type)**2).mean()
 
+                # If using model type 3.
+
                 if limit_conditions is not None:
                     mse_b = l_b(model, limit_conditions)
                     mse_0 = 0
@@ -97,11 +82,8 @@ def fit_glycemic(model, dataloader, optimizer, scheduler, limit_conditions = Non
                     mse_appr = l_appr(model, state = 2)
                 else:
                     mse_appr = l_appr(model)
-                # print('losses', mse_0, mse_f, mse_b)
+                
                 _loss = mse_0 + mse_f + mse_b + mse_appr
-
-                # print(f'l_0 : {l_0} | l_b : {l_b} | l_f {l_f}')
-                # print('lll', mse_0, mse_f)
 
                 _loss.backward()
                 return _loss
@@ -110,13 +92,6 @@ def fit_glycemic(model, dataloader, optimizer, scheduler, limit_conditions = Non
 
             # calculate loss again for monitoring.
             mse_0 = l_0(model)
-            # # if limit_conditions is None:
-            # #     u_type = 1
-            # # else:
-            # #     if limit_conditions[0] >= 6:
-            # #         u_type = 1
-            # #     else:
-            # #         u_type = 2
             mse_f = (model.eq_1(t_f)**2 + model.eq_2(t_f)**2 + model.eq_3(t_f, u_type = u_type)**2).mean()
 
             if limit_conditions is not None:
@@ -137,13 +112,6 @@ def fit_glycemic(model, dataloader, optimizer, scheduler, limit_conditions = Non
 
             mse_0 = l_0(model)
 
-            # # if limit_conditions is None:
-            # #     u_type = 1
-            # # else:
-            # #     if limit_conditions[0] >= 6:
-            # #         u_type = 1
-            # #     else:
-            # #         u_type = 2
             mse_f = (model.eq_1(t_f)**2 + model.eq_2(t_f)**2 + model.eq_3(t_f, u_type = u_type)**2).mean()
 
             if limit_conditions is not None:
@@ -174,17 +142,6 @@ def train_glycemic(model, train_loader, val_loader, optimizer, scheduler, n_epoc
 
     min_loss = np.inf
 
-    # # if limit_conditions is None:
-    # #     u_type = 3
-    # # else:
-    # #     if limit_conditions[1] < 4:
-    # #         u_type = 1
-    # #     elif 4 <= limit_conditions[1] <= 8:
-    # #         u_type = 2
-    # #     else:
-    # #         u_type = 3
-
-
     if limit_conditions is None:
         u_type = 1
     else:
@@ -193,7 +150,6 @@ def train_glycemic(model, train_loader, val_loader, optimizer, scheduler, n_epoc
         else:
             u_type = 2
             
-    print('u_type : ', u_type)
     for epoch in tqdm.tqdm(range(n_epochs)):
         train_epoch_loss = fit_glycemic(model, train_loader, optimizer, scheduler, limit_conditions = limit_conditions, type_ = type_, u_type = u_type)
         val_epoch_loss = validate_glycemic(model, val_loader, limit_conditions = limit_conditions, u_type = u_type)
@@ -247,8 +203,6 @@ def fit(model, dataloader, optimizer, scheduler, type_ = 'LBFGS'):
     device = model.device
     running_loss = 0.0
 
-    
-    
     total = int(len(dataloader.dataset)/dataloader.batch_size)
 
     for i, data in tqdm.tqdm(enumerate(dataloader), total = total):
@@ -266,8 +220,6 @@ def fit(model, dataloader, optimizer, scheduler, type_ = 'LBFGS'):
                 l_f = loss_f(data_f, model, None)
 
                 _loss = l_0 + l_b + l_f  
-
-                # print(f'l_0 : {l_0} | l_b : {l_b} | l_f {l_f}')
 
                 _loss.backward()
                 return _loss
@@ -364,7 +316,6 @@ def train(model, train_loader, val_loader, optimizer, scheduler, n_epochs, weigh
             plt.savefig('./figures/learning.jpg')
             plt.close()
 
-        
     return train_loss, val_loss, lr_list
 
 def predict(model, data):

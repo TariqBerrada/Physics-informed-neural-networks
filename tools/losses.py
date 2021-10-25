@@ -9,7 +9,6 @@ criterion_f = torch.nn.MSELoss(reduction = 'mean')
 
 
 def loss_0(data, model):
-    # data : (batch_size, 5)
 
     _input = torch.stack((data[:, 1], torch.zeros_like(data[:, 1]))).T
 
@@ -34,8 +33,6 @@ def loss_b(data, model):
     
     left_output_grad = model.dx(left_input)
     right_output_grad = model.dt(right_input)
-
-    # print('shapes for training', left_output.shape, left_output_grad.shape)
 
     loss_mean = criterion_b(left_output, right_output)
     loss_grad = criterion_bx(left_output_grad, right_output_grad)
@@ -66,8 +63,6 @@ def loss_f(data, model, equation):
 
     f = f_r**2 + f_im**2
 
-    MSE_f = f.mean() # criterion_f(f, torch.zeros_like(f))
-
-    # print('mse_f', MSE_f)
+    MSE_f = f.mean()
 
     return MSE_f
