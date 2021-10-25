@@ -157,7 +157,7 @@ def fit_glycemic(model, dataloader, optimizer, scheduler, limit_conditions = Non
             else:
                 mse_appr = l_appr(model)
 
-            _loss = mse_0 + mse_f + mse_b + mse_appr
+            _loss = mse_0 + mse_f +3*mse_b + mse_appr
     
             running_loss += _loss.item()
             _loss.backward()
